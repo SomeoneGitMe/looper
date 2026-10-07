@@ -33,7 +33,7 @@ Deploy with Vercel
 
 [https://vercel.com/new/clone?repository-url=https://github.com/SomeoneGitMe/looper&env=SPOTIFY_CLIENT_ID,SPOTIFY_CLIENT_SECRET,NEXTAUTH_SECRET,NEXTAUTH_URL,YOUTUBE_API_KEY]
 
-1. Click Deploy with Vercel above — Vercel clones the repo and asks for theenvironment variables below (you can add them after the first deploy too)
+1. Click Deploy with Vercel above — Vercel clones the repo and asks for the environment variables below (you can add them after the first deploy too)
 2. Copy your deployed URL (e.g. https://looper-yourname.vercel.app)
 3. Create a free Spotify app atdeveloper.spotify.com/dashboard:
    - Redirect URI: https://YOUR-DEPLOYED-URL/api/auth/callback/spotify
