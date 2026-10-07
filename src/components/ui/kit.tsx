@@ -149,6 +149,8 @@ export function StopButton({
 /* VolumeSlider — custom-built so it renders identically in every      */
 /* browser. The native input is invisible but handles all the actual   */
 /* dragging, keyboard, and accessibility; the visuals are ours.        */
+/* Step is derived from the range so a 0–1 scale (Spotify) and a        */
+/* 0–100 scale (YouTube) both get 100 smooth increments.               */
 /* ------------------------------------------------------------------ */
 
 export function VolumeSlider({
@@ -161,6 +163,7 @@ export function VolumeSlider({
   onChange: (v: number) => void;
 }) {
   const pct = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
+  const step = max > 0 ? max / 100 : 1;
 
   return (
     <div className="group relative flex h-6 flex-1 cursor-pointer items-center">
@@ -181,7 +184,7 @@ export function VolumeSlider({
         type="range"
         min={0}
         max={max}
-        step={1}
+        step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         aria-label="Volume"
