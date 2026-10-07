@@ -33,14 +33,15 @@ Deploy with Vercel
 
 [https://vercel.com/new/clone?repository-url=https://github.com/SomeoneGitMe/looper&env=SPOTIFY_CLIENT_ID,SPOTIFY_CLIENT_SECRET,NEXTAUTH_SECRET,NEXTAUTH_URL,YOUTUBE_API_KEY]
 
-Click Deploy with Vercel above — Vercel clones the repo and asks for theenvironment variables below (you can add them after the first deploy too)
-Copy your deployed URL (e.g. https://looper-yourname.vercel.app)
-Create a free Spotify app atdeveloper.spotify.com/dashboard:
-Redirect URI: https://YOUR-DEPLOYED-URL/api/auth/callback/spotify
-Check Web API + Web Playback SDK
-Grab the Client ID + Client Secret
-Grab a free YouTube API key: Google Cloud Console → new project → enableYouTube Data API v3 → Credentials → Create API key
-Generate an auth secret:node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-Fill the five variables in Vercel → Settings → Environment Variables:SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, NEXTAUTH_SECRET, NEXTAUTH_URL(your deployed URL), YOUTUBE_API_KEY → Redeploy
-Spotify dashboard → your app → User Management → add up to 5 operator emails(the people who'll sign in — listeners never authenticate)
+1. Click Deploy with Vercel above — Vercel clones the repo and asks for theenvironment variables below (you can add them after the first deploy too)
+2. Copy your deployed URL (e.g. https://looper-yourname.vercel.app)
+3. Create a free Spotify app atdeveloper.spotify.com/dashboard:
+   - Redirect URI: https://YOUR-DEPLOYED-URL/api/auth/callback/spotify
+   - Check Web API + Web Playback SDK
+   - Grab the Client ID + Client Secret
+4. Grab a free YouTube API key: Google Cloud Console → new project → enableYouTube Data API v3 → Credentials → Create API key
+5. Generate an auth secret:node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+6. Fill the five variables in Vercel → Settings → Environment Variables:SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, NEXTAUTH_SECRET, NEXTAUTH_URL(your deployed URL), YOUTUBE_API_KEY → Redeploy
+7. Spotify dashboard → your app → User Management → add up to 5 operator emails(the people who'll sign in — listeners never authenticate)
+
 YouTube mode needs none of the Spotify steps and works immediately.
