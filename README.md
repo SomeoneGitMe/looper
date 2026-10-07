@@ -1,4 +1,4 @@
-Looper — Dual-Platform Music Widget
+Looper: Dual-Platform Music Widget
 
 ♾️Looper
 
