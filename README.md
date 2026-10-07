@@ -15,7 +15,7 @@ A custom music widget for managers, artists, and entreprenuers. Loops an artist'
 
 🛠 Tech Stack
 
-Next.js (App Router) · React 19 · TypeScript · NextAuth v4 (Spotify OAuth with tokenauto-refresh) · Tailwind CSS v4 · Framer Motion · Spotify Web API + Web Playback SDK ·YouTube Data API v3 + IFrame Player API
+Next.js (App Router) · React 19 · TypeScript · NextAuth v4 (Spotify OAuth with token auto refresh) · Tailwind CSS v4 · Framer Motion · Spotify Web API + Web Playback SDK ·YouTube Data API v3 + IFrame Player API
 
 💻 Engineering Highlights
 
