@@ -14,6 +14,7 @@ import {
   PrimaryButton,
   StopButton,
   ControlLabel,
+  VolumeSlider,
 } from "@/components/ui/kit";
 
 declare global {
@@ -691,7 +692,6 @@ export default function YouTubeWidget({
 
   return (
     <div className="w-full space-y-8">
-      {/* Status row */}
       <div className="flex items-center justify-between">
         <span
           className={`flex items-center gap-2.5 text-xs ${
@@ -713,7 +713,6 @@ export default function YouTubeWidget({
         )}
       </div>
 
-      {/* Now playing hero */}
       <section className="animate-fade-up overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02]">
         <div className="relative aspect-video w-full bg-black">
           <div
@@ -750,7 +749,6 @@ export default function YouTubeWidget({
             {currentVideo?.channelTitle ?? "Search below to get started"}
           </p>
 
-          {/* Control bar */}
           <div className="mt-6 flex items-center gap-5">
             <button
               onClick={togglePlay}
@@ -780,19 +778,10 @@ export default function YouTubeWidget({
 
             <div className="hidden w-28 items-center gap-2.5 sm:flex">
               <IconVolume className="h-4 w-4 flex-shrink-0 text-neutral-500" />
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={volume}
-                onChange={(e) => changeVolume(Number(e.target.value))}
-                className="flex-1"
-              />
+              <VolumeSlider value={volume} max={100} onChange={changeVolume} />
             </div>
           </div>
 
-          {/* Stats */}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-5 text-[11px] uppercase tracking-[0.2em] text-neutral-600">
             <span>
               Plays
@@ -811,7 +800,6 @@ export default function YouTubeWidget({
         </div>
       </section>
 
-      {/* Search */}
       <Section
         label="Find videos"
         hint="Official audio and VEVO results rank first — they always play"
@@ -852,7 +840,6 @@ export default function YouTubeWidget({
         )}
       </Section>
 
-      {/* Channel */}
       <Section
         label="Load a channel"
         hint="Paste a YouTube channel link or just the artist's name"
@@ -913,7 +900,6 @@ export default function YouTubeWidget({
         )}
       </Section>
 
-      {/* Setlist */}
       <Section label="Setlist" hint="Your event's rotation — videos cycle in order">
         {setlist.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-neutral-600">
@@ -1001,7 +987,6 @@ export default function YouTubeWidget({
         )}
       </Section>
 
-      {/* Loop engine */}
       <Section
         label="Loop engine"
         hint="“This video” hangs whatever's playing. “Setlist” rotates. Changes apply instantly."

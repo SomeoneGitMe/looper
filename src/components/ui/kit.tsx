@@ -144,3 +144,49 @@ export function StopButton({
     </motion.button>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* VolumeSlider — custom-built so it renders identically in every      */
+/* browser. The native input is invisible but handles all the actual   */
+/* dragging, keyboard, and accessibility; the visuals are ours.        */
+/* ------------------------------------------------------------------ */
+
+export function VolumeSlider({
+  value,
+  max,
+  onChange,
+}: {
+  value: number;
+  max: number;
+  onChange: (v: number) => void;
+}) {
+  const pct = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
+
+  return (
+    <div className="group relative flex h-6 flex-1 cursor-pointer items-center">
+      {/* Track */}
+      <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/[0.08]" />
+      {/* Fill */}
+      <div
+        className="absolute h-1.5 rounded-full bg-gradient-to-r from-red-800 to-red-500 transition-[width] duration-100"
+        style={{ width: `${pct * 100}%` }}
+      />
+      {/* Knob */}
+      <div
+        className="absolute h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-white shadow-[0_0_10px_rgba(220,38,38,0.6)] transition-transform duration-150 group-hover:scale-125"
+        style={{ left: `${pct * 100}%` }}
+      />
+      {/* The real (invisible) input on top — drives all interaction */}
+      <input
+        type="range"
+        min={0}
+        max={max}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label="Volume"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+      />
+    </div>
+  );
+}

@@ -15,6 +15,7 @@ import {
   PrimaryButton,
   StopButton,
   ControlLabel,
+  VolumeSlider,
 } from "@/components/ui/kit";
 
 declare global {
@@ -141,7 +142,6 @@ export default function LooperWidget({
 }) {
   const { data: session } = useSession();
 
-  // Live token ref — the player always reads the newest value
   const tokenRef = useRef<string | null>(null);
   const hasToken = !!session?.accessToken;
 
@@ -149,34 +149,28 @@ export default function LooperWidget({
     tokenRef.current = session?.accessToken ?? null;
   }, [session?.accessToken]);
 
-  // Player
   const [player, setPlayer] = useState<any>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const deviceIdRef = useRef<string | null>(null);
   const [playerStatus, setPlayerStatus] = useState("Connecting to Spotify…");
 
-  // Now playing
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [paused, setPaused] = useState(true);
   const [volume, setVolume] = useState(0.5);
 
-  // Search
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Track[]>([]);
   const [searching, setSearching] = useState(false);
 
-  // Artist
   const [artistInput, setArtistInput] = useState("");
   const [artist, setArtist] = useState<ArtistInfo | null>(null);
   const [artistTracks, setArtistTracks] = useState<Track[]>([]);
   const [loadingArtist, setLoadingArtist] = useState(false);
 
-  // Setlist
   const [setlist, setSetlist] = useState<Track[]>([]);
 
-  // Loop engine
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("track");
   const [stopMode, setStopMode] = useState<StopMode>("never");
   const [stopPlays, setStopPlays] = useState(5);
@@ -186,7 +180,6 @@ export default function LooperWidget({
   const [galaRemaining, setGalaRemaining] = useState<number | null>(null);
   const [status, setStatus] = useState("");
 
-  // Refs read inside the polling interval (avoid stale closures)
   const lastPosRef = useRef(0);
   const playCountRef = useRef(0);
   const loopActiveRef = useRef(false);
@@ -208,7 +201,6 @@ export default function LooperWidget({
     repeatModeRef.current = repeatMode;
   }, [repeatMode]);
 
-  // Register our pause function with the wrapper (platform coordination)
   useEffect(() => {
     if (!onPauseReady) return;
     onPauseReady(() => {
@@ -220,7 +212,6 @@ export default function LooperWidget({
     });
   }, [onPauseReady, player]);
 
-  // ---- Web Playback SDK init (once per login; token read live from ref) ----
   useEffect(() => {
     if (!hasToken) return;
 
@@ -300,7 +291,6 @@ export default function LooperWidget({
     [player]
   );
 
-  // ---- Polling: now playing UI + loop engine ----
   useEffect(() => {
     if (!player) return;
 
@@ -326,7 +316,6 @@ export default function LooperWidget({
           setGalaRemaining(galaEndsAtRef.current - Date.now());
         }
 
-        // Wrap detection: position jumped backwards = a play completed
         if (!state.paused) {
           const last = lastPosRef.current;
           if (last > 10000 && state.position < last - 10000) {
@@ -336,7 +325,6 @@ export default function LooperWidget({
         }
         lastPosRef.current = state.position;
 
-        // Stop conditions
         if (loopActiveRef.current) {
           if (
             stopModeRef.current === "plays" &&
@@ -359,7 +347,6 @@ export default function LooperWidget({
     return () => clearInterval(interval);
   }, [player, stopLoop]);
 
-  // ---- Actions ----
   async function playTrack(track: Track) {
     const id = deviceIdRef.current;
     if (!id) {
@@ -415,7 +402,6 @@ export default function LooperWidget({
     }
   }
 
-  // Repeat toggles — apply LIVE when music is playing
   async function selectRepeat(mode: RepeatMode) {
     setRepeatMode(mode);
     repeatModeRef.current = mode;
@@ -445,7 +431,6 @@ export default function LooperWidget({
       return;
     }
 
-    // Setlist mode — start the rotation immediately if we have one
     if (setlist.length === 0) {
       setStatus("Setlist is empty — add songs with the + button");
       return;
@@ -483,7 +468,6 @@ export default function LooperWidget({
 
     let uris: string[];
     if (mode === "track") {
-      // "This song" = whatever is playing NOW. Setlist never overrides it.
       if (currentTrack) {
         uris = [currentTrack.uri];
       } else if (setlist.length > 0) {
@@ -637,7 +621,6 @@ export default function LooperWidget({
 
   return (
     <div className="w-full space-y-8">
-      {/* Status row */}
       <div className="flex items-center justify-between">
         <span
           className={`flex items-center gap-2.5 text-xs ${
@@ -659,7 +642,6 @@ export default function LooperWidget({
         )}
       </div>
 
-      {/* Now playing hero */}
       <section className="animate-fade-up rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-7">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
           {currentTrack?.albumArt ? (
@@ -691,7 +673,6 @@ export default function LooperWidget({
               </p>
             )}
 
-            {/* Control bar */}
             <div className="mt-7 flex items-center gap-5">
               <button
                 onClick={togglePlay}
@@ -721,21 +702,12 @@ export default function LooperWidget({
 
               <div className="hidden w-28 items-center gap-2.5 sm:flex">
                 <IconVolume className="h-4 w-4 flex-shrink-0 text-neutral-500" />
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={volume}
-                  onChange={(e) => changeVolume(Number(e.target.value))}
-                  className="flex-1"
-                />
+                <VolumeSlider value={volume} max={1} onChange={changeVolume} />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-5 text-[11px] uppercase tracking-[0.2em] text-neutral-600">
           <span>
             Plays
@@ -753,7 +725,6 @@ export default function LooperWidget({
         </div>
       </section>
 
-      {/* Search */}
       <Section
         label="Find songs"
         hint="Search any song or artist — plays count toward their streams"
@@ -793,7 +764,6 @@ export default function LooperWidget({
         )}
       </Section>
 
-      {/* Artist */}
       <Section
         label="Load an artist"
         hint="Paste an artist's Spotify page link (contains /artist/) to pull their top tracks"
@@ -853,7 +823,6 @@ export default function LooperWidget({
         )}
       </Section>
 
-      {/* Setlist */}
       <Section label="Setlist" hint="Your event's rotation — songs cycle in order">
         {setlist.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-neutral-600">
@@ -925,7 +894,6 @@ export default function LooperWidget({
         )}
       </Section>
 
-      {/* Loop engine */}
       <Section
         label="Loop engine"
         hint="“This song” hangs whatever's playing. “Setlist” rotates. Changes apply instantly."
