@@ -6,8 +6,15 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
-  type ReactNode,
 } from "react";
+import {
+  Section,
+  SegmentedControl,
+  NumberField,
+  PrimaryButton,
+  StopButton,
+  ControlLabel,
+} from "@/components/ui/kit";
 
 declare global {
   interface Window {
@@ -60,48 +67,12 @@ function fmtCount(n: number): string {
   return `${n}`;
 }
 
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function IconVolume({ className = "" }: { className?: string }) {
   return (
-    <section className="rounded-2xl border border-red-900/30 bg-[#0c0c0c] p-5">
-      <div className="mb-4">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.25em] text-red-500/80">
-          {title}
-        </h2>
-        {hint && <p className="mt-1 text-xs text-neutral-500">{hint}</p>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Toggle({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-        active
-          ? "bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.35)]"
-          : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
-      }`}
-    >
-      {children}
-    </button>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+    </svg>
   );
 }
 
@@ -119,18 +90,18 @@ function VideoRow({
   const dead = unavailable || !video.embeddable;
   return (
     <div
-      className={`group flex items-center gap-3 rounded-xl p-2 transition hover:bg-neutral-900/70 ${
+      className={`group flex items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-white/[0.04] ${
         unavailable ? "opacity-40" : ""
       }`}
     >
-      <div className="relative h-11 w-[74px] flex-shrink-0 overflow-hidden rounded-md bg-neutral-800">
+      <div className="relative h-12 w-[84px] flex-shrink-0 overflow-hidden rounded-lg bg-neutral-900">
         {video.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={video.thumbnail} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-neutral-600">▶</div>
+          <div className="flex h-full w-full items-center justify-center text-neutral-700">▶</div>
         )}
-        <span className="absolute bottom-0.5 right-0.5 rounded bg-black/80 px-1 text-[9px] text-white">
+        <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1.5 py-0.5 text-[9px] font-medium tabular-nums text-white">
           {fmtTime(video.durationMs)}
         </span>
       </div>
@@ -138,19 +109,19 @@ function VideoRow({
         <p className="truncate text-sm font-medium text-white" title={video.title}>
           {video.title}
         </p>
-        <p className="flex items-center gap-1.5 truncate text-xs text-neutral-400">
+        <p className="mt-0.5 flex items-center gap-2 truncate text-xs text-neutral-500">
           <span className="truncate">
             {video.channelTitle}
             {video.viewCount > 0 ? ` · ${fmtCount(video.viewCount)} views` : ""}
           </span>
           {video.isTopic && (
-            <span className="flex-shrink-0 rounded bg-red-950 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-red-400">
-              official audio
+            <span className="flex-shrink-0 rounded-full bg-red-600/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-400">
+              Official audio
             </span>
           )}
           {unavailable && (
-            <span className="flex-shrink-0 rounded bg-red-950 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-red-400">
-              unavailable
+            <span className="flex-shrink-0 rounded-full bg-red-600/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-400">
+              Unavailable
             </span>
           )}
         </p>
@@ -165,7 +136,7 @@ function VideoRow({
             ? "Play now"
             : "This video's owner disabled embedding"
         }
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-sm text-white opacity-70 transition hover:bg-red-500 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-25"
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-sm text-white opacity-80 transition hover:bg-red-500 hover:opacity-100 disabled:pointer-events-none disabled:opacity-20"
       >
         ▶
       </button>
@@ -174,7 +145,7 @@ function VideoRow({
           onClick={onAdd}
           disabled={dead}
           title={dead ? "Can't be embedded" : "Add to setlist"}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-red-900/40 text-sm text-neutral-400 opacity-70 transition hover:border-red-500 hover:text-white hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-25"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/[0.1] text-neutral-400 transition hover:border-red-600/50 hover:text-white disabled:pointer-events-none disabled:opacity-20"
         >
           +
         </button>
@@ -221,7 +192,6 @@ export default function YouTubeWidget({
   const [galaRemaining, setGalaRemaining] = useState<number | null>(null);
   const [status, setStatus] = useState("");
 
-  // Videos that failed to play — marked and auto-skipped from now on
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
   const unavailableRef = useRef<Set<string>>(new Set());
   const errorStreakRef = useRef(0);
@@ -282,7 +252,6 @@ export default function YouTubeWidget({
     setUnavailableIds(next);
   }, []);
 
-  // Advance to the next playable setlist video, skipping dead ones
   const advanceSetlist = useCallback(() => {
     const p = playerRef.current;
     const list = setlistRef.current;
@@ -308,7 +277,7 @@ export default function YouTubeWidget({
 
     if (state === YTState.PLAYING) {
       setPaused(false);
-      errorStreakRef.current = 0; // healthy playback — reset the failure streak
+      errorStreakRef.current = 0;
       return;
     }
     if (state === YTState.PAUSED) {
@@ -368,7 +337,6 @@ export default function YouTubeWidget({
     if (failed) markUnavailable(failed.videoId);
     errorStreakRef.current += 1;
 
-    // Recovery 1: setlist mode and the failed video is in the setlist
     const inSetlist = failed
       ? setlist.some((v) => v.videoId === failed.videoId)
       : false;
@@ -378,12 +346,13 @@ export default function YouTubeWidget({
       setlist.length > 1 &&
       errorStreakRef.current <= setlist.length
     ) {
-      setStatus(`“${failed?.title ?? "Video"}” can't play — ${reason}. Skipping to the next setlist video…`);
+      setStatus(
+        `“${failed?.title ?? "Video"}” can't play — ${reason}. Skipping to the next setlist video…`
+      );
       advanceSetlist();
       return;
     }
 
-    // Recovery 2: try the next best search result
     const idx = failed
       ? searchResults.findIndex((v) => v.videoId === failed.videoId)
       : -1;
@@ -391,7 +360,9 @@ export default function YouTubeWidget({
       for (let i = idx + 1; i < searchResults.length; i++) {
         const cand = searchResults[i];
         if (cand.embeddable && !unavailableRef.current.has(cand.videoId)) {
-          setStatus(`“${failed!.title}” can't play — ${reason}. Trying “${cand.title}”…`);
+          setStatus(
+            `“${failed!.title}” can't play — ${reason}. Trying “${cand.title}”…`
+          );
           playVideoRow(cand);
           return;
         }
@@ -719,30 +690,32 @@ export default function YouTubeWidget({
       : "—";
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4">
+    <div className="w-full space-y-8">
+      {/* Status row */}
       <div className="flex items-center justify-between">
         <span
-          className={`flex items-center gap-2 text-xs ${
-            playerReady ? "text-emerald-400" : "text-amber-400"
+          className={`flex items-center gap-2.5 text-xs ${
+            playerReady ? "text-emerald-400/90" : "text-amber-400/90"
           }`}
         >
           <span
-            className={`h-2 w-2 rounded-full ${
+            className={`h-1.5 w-1.5 rounded-full ${
               playerReady ? "animate-pulse bg-emerald-400" : "bg-amber-400"
             }`}
           />
-          {playerReady ? "Widget live on YouTube" : playerStatus}
+          {playerReady ? "Live" : playerStatus}
         </span>
         {loopActive && (
-          <span className="flex items-center gap-2 text-xs font-medium text-red-400">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-            LOOPING
+          <span className="flex items-center gap-2 rounded-full border border-red-600/30 bg-red-600/10 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-red-400">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+            Looping
           </span>
         )}
       </div>
 
-      <section className="rounded-2xl border border-red-900/40 bg-gradient-to-b from-[#160a0a] to-[#0c0c0c] p-5">
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+      {/* Now playing hero */}
+      <section className="animate-fade-up overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02]">
+        <div className="relative aspect-video w-full bg-black">
           <div
             ref={containerRef}
             className="absolute inset-0 [&>iframe]:h-full [&>iframe]:w-full"
@@ -754,105 +727,118 @@ export default function YouTubeWidget({
             className="absolute inset-0 flex items-center justify-center disabled:cursor-default"
           >
             {paused && currentVideo && playerReady && (
-              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600/90 text-2xl text-white shadow-[0_0_30px_rgba(220,38,38,0.5)]">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600/90 text-2xl text-white shadow-[0_0_40px_rgba(220,38,38,0.5)]">
                 ▶
               </span>
             )}
           </button>
           {!playerReady && (
-            <div className="absolute inset-0 flex items-center justify-center text-xs text-neutral-500">
+            <div className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.3em] text-neutral-600">
               {playerStatus}
             </div>
           )}
         </div>
 
-        <div className="mt-4 flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-lg font-semibold text-white" title={currentVideo?.title}>
-              {currentVideo?.title ?? "Nothing playing yet"}
-            </p>
-            <p className="truncate text-sm text-neutral-400">
-              {currentVideo?.channelTitle ?? "Search a video below to get started"}
-            </p>
-          </div>
-          <button
-            onClick={togglePlay}
-            disabled={!currentVideo}
-            title={paused ? "Play" : "Pause"}
-            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] transition hover:bg-red-500 disabled:opacity-30"
+        <div className="p-6 md:p-7">
+          <h2
+            className="truncate text-2xl font-medium tracking-tight text-white"
+            title={currentVideo?.title}
           >
-            {paused ? "▶" : "❚❚"}
-          </button>
-        </div>
+            {currentVideo?.title ?? "Nothing playing yet"}
+          </h2>
+          <p className="mt-1 truncate text-sm text-neutral-500">
+            {currentVideo?.channelTitle ?? "Search below to get started"}
+          </p>
 
-        <div className="mt-4 cursor-pointer" onClick={seekTo}>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500 transition-[width] duration-300"
-              style={{ width: `${duration ? (position / duration) * 100 : 0}%` }}
-            />
+          {/* Control bar */}
+          <div className="mt-6 flex items-center gap-5">
+            <button
+              onClick={togglePlay}
+              disabled={!currentVideo}
+              title={paused ? "Play" : "Pause"}
+              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-[0_0_25px_rgba(220,38,38,0.4)] transition-all hover:bg-red-500 disabled:opacity-30"
+            >
+              {paused ? "▶" : "❚❚"}
+            </button>
+
+            <div className="min-w-0 flex-1">
+              <div className="cursor-pointer" onClick={seekTo}>
+                <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.08]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500 transition-[width] duration-300"
+                    style={{
+                      width: `${duration ? (position / duration) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-neutral-600">
+                <span>{fmtTime(position)}</span>
+                <span>{fmtTime(duration)}</span>
+              </div>
+            </div>
+
+            <div className="hidden w-28 items-center gap-2.5 sm:flex">
+              <IconVolume className="h-4 w-4 flex-shrink-0 text-neutral-500" />
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={volume}
+                onChange={(e) => changeVolume(Number(e.target.value))}
+                className="flex-1"
+              />
+            </div>
           </div>
-        </div>
-        <div className="mt-1 flex justify-between text-xs text-neutral-500">
-          <span>{fmtTime(position)}</span>
-          <span>{fmtTime(duration)}</span>
-        </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          <span className="text-[10px] uppercase tracking-widest text-neutral-500">
-            Vol
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={volume}
-            onChange={(e) => changeVolume(Number(e.target.value))}
-            className="flex-1 accent-red-600"
-          />
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-neutral-900 pt-3 text-xs text-neutral-500">
-          <span>
-            PLAYS COMPLETED{" "}
-            <span className="font-semibold text-neutral-200">{playCount}</span>
-            {stopMode === "plays" && <span> / {stopPlays}</span>}
-          </span>
-          <span>
-            EVENT TIMER{" "}
-            <span className="font-semibold text-neutral-200">{timerDisplay}</span>
-          </span>
+          {/* Stats */}
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-5 text-[11px] uppercase tracking-[0.2em] text-neutral-600">
+            <span>
+              Plays
+              <span className="ml-1.5 font-semibold tabular-nums text-neutral-300">
+                {playCount}
+              </span>
+              {stopMode === "plays" && <span> / {stopPlays}</span>}
+            </span>
+            <span>
+              Timer
+              <span className="ml-1.5 font-semibold tabular-nums text-neutral-300">
+                {timerDisplay}
+              </span>
+            </span>
+          </div>
         </div>
       </section>
 
+      {/* Search */}
       <Section
-        title="Find videos"
-        hint="Official audio (Topic) and VEVO results rank first — they always play"
+        label="Find videos"
+        hint="Official audio and VEVO results rank first — they always play"
       >
         <form
           onSubmit={(e) => {
             e.preventDefault();
             doSearch();
           }}
-          className="flex gap-2"
+          className="flex gap-2.5"
         >
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Song, artist, or “artist name official video”…"
-            className="flex-1 rounded-xl border border-red-900/40 bg-neutral-950 px-4 py-3 text-sm text-white placeholder-neutral-600 transition focus:border-red-500 focus:outline-none"
+            className="h-12 flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-5 text-sm text-white placeholder-neutral-600 transition-colors focus:border-red-600/50 focus:outline-none"
           />
           <button
             type="submit"
             disabled={searching || !searchQuery.trim()}
-            className="rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-12 flex-shrink-0 rounded-full bg-red-600 px-7 text-sm font-semibold text-white transition hover:bg-red-500 disabled:pointer-events-none disabled:opacity-40"
           >
             {searching ? "…" : "Search"}
           </button>
         </form>
         {searchResults.length > 0 && (
-          <div className="mt-3 space-y-1">
+          <div className="mt-4 space-y-1">
             {searchResults.map((v) => (
               <VideoRow
                 key={v.videoId}
@@ -866,8 +852,9 @@ export default function YouTubeWidget({
         )}
       </Section>
 
+      {/* Channel */}
       <Section
-        title="Load a channel"
+        label="Load a channel"
         hint="Paste a YouTube channel link or just the artist's name"
       >
         <form
@@ -875,34 +862,34 @@ export default function YouTubeWidget({
             e.preventDefault();
             loadChannel();
           }}
-          className="flex gap-2"
+          className="flex gap-2.5"
         >
           <input
             value={channelInput}
             onChange={(e) => setChannelInput(e.target.value)}
             placeholder="https://youtube.com/@… or channel URL or name"
-            className="flex-1 rounded-xl border border-red-900/40 bg-neutral-950 px-4 py-3 text-sm text-white placeholder-neutral-600 transition focus:border-red-500 focus:outline-none"
+            className="h-12 flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-5 text-sm text-white placeholder-neutral-600 transition-colors focus:border-red-600/50 focus:outline-none"
           />
           <button
             type="submit"
             disabled={loadingChannel || !channelInput.trim()}
-            className="rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-12 flex-shrink-0 rounded-full bg-red-600 px-7 text-sm font-semibold text-white transition hover:bg-red-500 disabled:pointer-events-none disabled:opacity-40"
           >
             {loadingChannel ? "…" : "Load"}
           </button>
         </form>
         {channel && (
-          <div className="mt-4 flex items-center gap-4 rounded-xl bg-neutral-900/50 p-3">
+          <div className="mt-5 flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
             {channel.image && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={channel.image}
                 alt=""
-                className="h-16 w-16 rounded-full object-cover ring-2 ring-red-900/60"
+                className="h-14 w-14 rounded-full object-cover ring-1 ring-white/10"
               />
             )}
             <div>
-              <p className="text-lg font-semibold text-white">{channel.name}</p>
+              <p className="text-lg font-medium text-white">{channel.name}</p>
               {channel.subscribers > 0 && (
                 <p className="text-xs text-neutral-500">
                   {fmtCount(channel.subscribers)} subscribers
@@ -912,7 +899,7 @@ export default function YouTubeWidget({
           </div>
         )}
         {channelVideos.length > 0 && (
-          <div className="mt-3 space-y-1">
+          <div className="mt-4 space-y-1">
             {channelVideos.map((v) => (
               <VideoRow
                 key={v.videoId}
@@ -926,9 +913,10 @@ export default function YouTubeWidget({
         )}
       </Section>
 
-      <Section title="Setlist" hint="Your event's rotation — videos cycle in order">
+      {/* Setlist */}
+      <Section label="Setlist" hint="Your event's rotation — videos cycle in order">
         {setlist.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-neutral-800 p-4 text-center text-sm text-neutral-600">
+          <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-neutral-600">
             Empty — add videos with the + button
           </p>
         ) : (
@@ -939,14 +927,14 @@ export default function YouTubeWidget({
                 return (
                   <div
                     key={`${v.videoId}-${i}`}
-                    className={`flex items-center gap-3 rounded-xl p-2 transition hover:bg-neutral-900/70 ${
+                    className={`flex items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-white/[0.04] ${
                       dead ? "opacity-40" : ""
                     }`}
                   >
-                    <span className="w-5 text-center text-xs text-neutral-600">
+                    <span className="w-5 text-center text-xs tabular-nums text-neutral-600">
                       {i + 1}
                     </span>
-                    <div className="relative h-10 w-[66px] flex-shrink-0 overflow-hidden rounded-md bg-neutral-800">
+                    <div className="relative h-10 w-[70px] flex-shrink-0 overflow-hidden rounded-lg bg-neutral-900">
                       {v.thumbnail ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -957,7 +945,7 @@ export default function YouTubeWidget({
                       ) : (
                         <div className="h-full w-full" />
                       )}
-                      <span className="absolute bottom-0.5 right-0.5 rounded bg-black/80 px-1 text-[9px] text-white">
+                      <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1.5 py-0.5 text-[9px] font-medium tabular-nums text-white">
                         {fmtTime(v.durationMs)}
                       </span>
                     </div>
@@ -965,11 +953,11 @@ export default function YouTubeWidget({
                       <p className="truncate text-sm font-medium text-white" title={v.title}>
                         {v.title}
                       </p>
-                      <p className="flex items-center gap-1.5 truncate text-xs text-neutral-400">
+                      <p className="mt-0.5 flex items-center gap-2 truncate text-xs text-neutral-500">
                         <span className="truncate">{v.channelTitle}</span>
                         {dead && (
-                          <span className="flex-shrink-0 rounded bg-red-950 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-red-400">
-                            unavailable
+                          <span className="flex-shrink-0 rounded-full bg-red-600/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-400">
+                            Unavailable
                           </span>
                         )}
                       </p>
@@ -978,7 +966,7 @@ export default function YouTubeWidget({
                       onClick={() => playVideoRow(v)}
                       disabled={dead}
                       title={dead ? "Can't be embedded" : "Play now"}
-                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-xs text-white opacity-70 transition hover:bg-red-500 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-25"
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-xs text-white opacity-80 transition hover:bg-red-500 hover:opacity-100 disabled:pointer-events-none disabled:opacity-20"
                     >
                       ▶
                     </button>
@@ -987,7 +975,7 @@ export default function YouTubeWidget({
                         setSetlist((prev) => prev.filter((_, idx) => idx !== i))
                       }
                       title="Remove"
-                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-neutral-500 opacity-70 transition hover:text-red-400 hover:opacity-100"
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:text-red-400"
                     >
                       ✕
                     </button>
@@ -995,16 +983,16 @@ export default function YouTubeWidget({
                 );
               })}
             </div>
-            <div className="mt-3 flex gap-2">
+            <div className="mt-5 flex gap-2.5">
               <button
                 onClick={playSetlistNow}
-                className="flex-1 rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700"
+                className="h-12 flex-1 rounded-full bg-red-600 text-sm font-semibold text-white transition hover:bg-red-500"
               >
                 Play setlist
               </button>
               <button
                 onClick={() => setSetlist([])}
-                className="rounded-xl border border-red-900/40 px-6 py-3 text-sm text-neutral-400 transition hover:border-red-500 hover:text-white"
+                className="h-12 rounded-full border border-white/[0.1] px-6 text-sm text-neutral-400 transition hover:border-white/30 hover:text-white"
               >
                 Clear
               </button>
@@ -1013,100 +1001,74 @@ export default function YouTubeWidget({
         )}
       </Section>
 
+      {/* Loop engine */}
       <Section
-        title="Loop engine"
-        hint="This video hangs whatever's playing. Setlist rotates the setlist. Toggles apply instantly."
+        label="Loop engine"
+        hint="“This video” hangs whatever's playing. “Setlist” rotates. Changes apply instantly."
       >
-        <div className="space-y-4">
+        <div className="space-y-7">
           <div>
-            <p className="mb-2 text-[10px] uppercase tracking-widest text-neutral-500">
-              Repeat
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Toggle active={repeatMode === "off"} onClick={() => selectRepeat("off")}>
-                Off
-              </Toggle>
-              <Toggle
-                active={repeatMode === "track"}
-                onClick={() => selectRepeat("track")}
-              >
-                This video
-              </Toggle>
-              <Toggle
-                active={repeatMode === "context"}
-                onClick={() => selectRepeat("context")}
-              >
-                Setlist
-              </Toggle>
-            </div>
+            <ControlLabel>Repeat</ControlLabel>
+            <SegmentedControl
+              id="yt-repeat"
+              options={[
+                { value: "off", label: "Off" },
+                { value: "track", label: "This video" },
+                { value: "context", label: "Setlist" },
+              ]}
+              value={repeatMode}
+              onChange={(m) => selectRepeat(m)}
+            />
           </div>
 
           <div>
-            <p className="mb-2 text-[10px] uppercase tracking-widest text-neutral-500">
-              Stop after
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Toggle active={stopMode === "never"} onClick={() => setStopMode("never")}>
-                Forever
-              </Toggle>
-              <Toggle active={stopMode === "plays"} onClick={() => setStopMode("plays")}>
-                Plays
-              </Toggle>
+            <ControlLabel>Stop after</ControlLabel>
+            <div className="flex flex-wrap items-center gap-3">
+              <SegmentedControl
+                id="yt-stop"
+                options={[
+                  { value: "never", label: "Forever" },
+                  { value: "plays", label: "Plays" },
+                  { value: "duration", label: "Hours" },
+                ]}
+                value={stopMode}
+                onChange={setStopMode}
+              />
               {stopMode === "plays" && (
-                <input
-                  type="number"
+                <NumberField
+                  value={stopPlays}
+                  onChange={setStopPlays}
                   min={1}
                   max={999}
-                  value={stopPlays}
-                  onChange={(e) =>
-                    setStopPlays(Math.max(1, Number(e.target.value) || 1))
-                  }
-                  className="w-16 rounded-lg border border-red-900/40 bg-neutral-950 px-2 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                  suffix="plays"
                 />
               )}
-              <Toggle
-                active={stopMode === "duration"}
-                onClick={() => setStopMode("duration")}
-              >
-                Hours
-              </Toggle>
               {stopMode === "duration" && (
-                <input
-                  type="number"
+                <NumberField
+                  value={stopHours}
+                  onChange={setStopHours}
                   min={1}
                   max={24}
-                  value={stopHours}
-                  onChange={(e) =>
-                    setStopHours(Math.max(1, Number(e.target.value) || 1))
-                  }
-                  className="w-16 rounded-lg border border-red-900/40 bg-neutral-950 px-2 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                  suffix="hours"
                 />
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-3 pt-1">
-            {!loopActive ? (
-              <button
-                onClick={startLoop}
-                className="rounded-xl bg-red-600 px-8 py-3 text-sm font-semibold text-white shadow-[0_0_20px_rgba(220,38,38,0.3)] transition hover:bg-red-700"
-              >
-                Start loop
-              </button>
-            ) : (
-              <button
-                onClick={() => stopLoop("Stopped — loop ended")}
-                className="rounded-xl border-2 border-red-600 px-8 py-3 text-sm font-semibold text-red-400 transition hover:bg-red-950"
-              >
+          <div className="pt-1">
+            {loopActive ? (
+              <StopButton onClick={() => stopLoop("Stopped — loop ended")}>
                 Stop
-              </button>
+              </StopButton>
+            ) : (
+              <PrimaryButton onClick={startLoop}>Start loop</PrimaryButton>
             )}
           </div>
         </div>
       </Section>
 
       {status && (
-        <p className="pb-4 text-center text-sm text-neutral-400">{status}</p>
+        <p className="pb-6 pt-1 text-center text-sm text-neutral-500">{status}</p>
       )}
     </div>
   );

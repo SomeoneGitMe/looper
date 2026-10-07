@@ -6,9 +6,16 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
-  type ReactNode,
 } from "react";
 import { useSession } from "next-auth/react";
+import {
+  Section,
+  SegmentedControl,
+  NumberField,
+  PrimaryButton,
+  StopButton,
+  ControlLabel,
+} from "@/components/ui/kit";
 
 declare global {
   interface Window {
@@ -51,48 +58,22 @@ function fmtCountdown(ms: number): string {
   return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function IconVolume({ className = "" }: { className?: string }) {
   return (
-    <section className="rounded-2xl border border-red-900/30 bg-[#0c0c0c] p-5">
-      <div className="mb-4">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.25em] text-red-500/80">
-          {title}
-        </h2>
-        {hint && <p className="mt-1 text-xs text-neutral-500">{hint}</p>}
-      </div>
-      {children}
-    </section>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+    </svg>
   );
 }
 
-function Toggle({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+function IconNote({ className = "" }: { className?: string }) {
   return (
-    <button
-      onClick={onClick}
-      className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-        active
-          ? "bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.35)]"
-          : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
-      }`}
-    >
-      {children}
-    </button>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </svg>
   );
 }
 
@@ -106,31 +87,35 @@ function TrackRow({
   onAdd?: () => void;
 }) {
   return (
-    <div className="group flex items-center gap-3 rounded-xl p-2 transition hover:bg-neutral-900/70">
+    <div className="group flex items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-white/[0.04]">
       {track.albumArt ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={track.albumArt}
           alt=""
-          className="h-11 w-11 flex-shrink-0 rounded-md object-cover"
+          className="h-12 w-12 flex-shrink-0 rounded-lg object-cover"
         />
       ) : (
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md bg-neutral-800 text-neutral-600">
-          ♪
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-900">
+          <IconNote className="h-5 w-5 text-neutral-700" />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-white">{track.name}</p>
-        <p className="truncate text-xs text-neutral-400">
+        <p className="truncate text-sm font-medium text-white" title={track.name}>
+          {track.name}
+        </p>
+        <p className="mt-0.5 truncate text-xs text-neutral-500">
           {track.artists}
           {track.album ? ` · ${track.album}` : ""}
         </p>
       </div>
-      <span className="text-xs text-neutral-500">{fmtTime(track.durationMs)}</span>
+      <span className="flex-shrink-0 text-xs tabular-nums text-neutral-600">
+        {fmtTime(track.durationMs)}
+      </span>
       <button
         onClick={onPlay}
         title="Play now"
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-sm text-white opacity-70 transition hover:bg-red-500 hover:opacity-100"
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-sm text-white opacity-80 transition hover:bg-red-500 hover:opacity-100"
       >
         ▶
       </button>
@@ -138,7 +123,7 @@ function TrackRow({
         <button
           onClick={onAdd}
           title="Add to setlist"
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-red-900/40 text-sm text-neutral-400 opacity-70 transition hover:border-red-500 hover:text-white hover:opacity-100"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/[0.1] text-neutral-400 transition hover:border-red-600/50 hover:text-white"
         >
           +
         </button>
@@ -651,106 +636,126 @@ export default function LooperWidget({
       : "—";
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4">
-      {/* Connection pill */}
+    <div className="w-full space-y-8">
+      {/* Status row */}
       <div className="flex items-center justify-between">
         <span
-          className={`flex items-center gap-2 text-xs ${
-            deviceId ? "text-emerald-400" : "text-amber-400"
+          className={`flex items-center gap-2.5 text-xs ${
+            deviceId ? "text-emerald-400/90" : "text-amber-400/90"
           }`}
         >
           <span
-            className={`h-2 w-2 rounded-full ${
+            className={`h-1.5 w-1.5 rounded-full ${
               deviceId ? "animate-pulse bg-emerald-400" : "bg-amber-400"
             }`}
           />
-          {deviceId ? "Widget live on Spotify" : playerStatus}
+          {deviceId ? "Live" : playerStatus}
         </span>
         {loopActive && (
-          <span className="flex items-center gap-2 text-xs font-medium text-red-400">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-            LOOPING
+          <span className="flex items-center gap-2 rounded-full border border-red-600/30 bg-red-600/10 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-red-400">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+            Looping
           </span>
         )}
       </div>
 
-      {/* Now Playing */}
-      <section className="rounded-2xl border border-red-900/40 bg-gradient-to-b from-[#160a0a] to-[#0c0c0c] p-5">
-        <div className="flex items-center gap-4">
+      {/* Now playing hero */}
+      <section className="animate-fade-up rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-7">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
           {currentTrack?.albumArt ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={currentTrack.albumArt}
               alt=""
-              className="h-20 w-20 flex-shrink-0 rounded-lg object-cover shadow-lg shadow-black/50"
+              className="h-44 w-44 flex-shrink-0 self-center rounded-2xl object-cover shadow-[0_16px_50px_rgba(0,0,0,0.55)] sm:self-auto"
             />
           ) : (
-            <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-2xl text-neutral-700">
-              ♪
+            <div className="flex h-44 w-44 flex-shrink-0 items-center justify-center self-center rounded-2xl border border-white/[0.06] bg-white/[0.02] sm:self-auto">
+              <IconNote className="h-14 w-14 text-neutral-800" />
             </div>
           )}
+
           <div className="min-w-0 flex-1">
-            <p className="truncate text-lg font-semibold text-white">
+            <h2
+              className="truncate text-2xl font-medium tracking-tight text-white md:text-3xl"
+              title={currentTrack?.name}
+            >
               {currentTrack?.name ?? "Nothing playing yet"}
+            </h2>
+            <p className="mt-1.5 truncate text-sm text-neutral-500">
+              {currentTrack?.artists ?? "Search below to get started"}
             </p>
-            <p className="truncate text-sm text-neutral-400">
-              {currentTrack?.artists ?? "Search a song below to get started"}
-            </p>
+            {currentTrack?.album && (
+              <p className="mt-0.5 truncate text-xs text-neutral-600">
+                {currentTrack.album}
+              </p>
+            )}
+
+            {/* Control bar */}
+            <div className="mt-7 flex items-center gap-5">
+              <button
+                onClick={togglePlay}
+                disabled={!currentTrack}
+                title={paused ? "Play" : "Pause"}
+                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-[0_0_25px_rgba(220,38,38,0.4)] transition-all hover:bg-red-500 disabled:opacity-30"
+              >
+                {paused ? "▶" : "❚❚"}
+              </button>
+
+              <div className="min-w-0 flex-1">
+                <div className="cursor-pointer" onClick={seekTo}>
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.08]">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500 transition-[width] duration-300"
+                      style={{
+                        width: `${duration ? (position / duration) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-neutral-600">
+                  <span>{fmtTime(position)}</span>
+                  <span>{fmtTime(duration)}</span>
+                </div>
+              </div>
+
+              <div className="hidden w-28 items-center gap-2.5 sm:flex">
+                <IconVolume className="h-4 w-4 flex-shrink-0 text-neutral-500" />
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={volume}
+                  onChange={(e) => changeVolume(Number(e.target.value))}
+                  className="flex-1"
+                />
+              </div>
+            </div>
           </div>
-          <button
-            onClick={togglePlay}
-            disabled={!currentTrack}
-            title={paused ? "Play" : "Pause"}
-            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] transition hover:bg-red-500 disabled:opacity-30"
-          >
-            {paused ? "▶" : "❚❚"}
-          </button>
         </div>
 
-        <div className="group mt-4 cursor-pointer" onClick={seekTo}>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-red-800 to-red-500 transition-[width] duration-300"
-              style={{ width: `${duration ? (position / duration) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
-        <div className="mt-1 flex justify-between text-xs text-neutral-500">
-          <span>{fmtTime(position)}</span>
-          <span>{fmtTime(duration)}</span>
-        </div>
-
-        <div className="mt-4 flex items-center gap-3">
-          <span className="text-[10px] uppercase tracking-widest text-neutral-500">
-            Vol
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={volume}
-            onChange={(e) => changeVolume(Number(e.target.value))}
-            className="flex-1 accent-red-600"
-          />
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-neutral-900 pt-3 text-xs text-neutral-500">
+        {/* Stats */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-5 text-[11px] uppercase tracking-[0.2em] text-neutral-600">
           <span>
-            PLAYS COMPLETED{" "}
-            <span className="font-semibold text-neutral-200">{playCount}</span>
+            Plays
+            <span className="ml-1.5 font-semibold tabular-nums text-neutral-300">
+              {playCount}
+            </span>
             {stopMode === "plays" && <span> / {stopPlays}</span>}
           </span>
           <span>
-            EVENT TIMER{" "}
-            <span className="font-semibold text-neutral-200">{timerDisplay}</span>
+            Timer
+            <span className="ml-1.5 font-semibold tabular-nums text-neutral-300">
+              {timerDisplay}
+            </span>
           </span>
         </div>
       </section>
 
       {/* Search */}
       <Section
-        title="Find songs"
+        label="Find songs"
         hint="Search any song or artist — plays count toward their streams"
       >
         <form
@@ -758,24 +763,24 @@ export default function LooperWidget({
             e.preventDefault();
             doSearch();
           }}
-          className="flex gap-2"
+          className="flex gap-2.5"
         >
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Song or artist name…"
-            className="flex-1 rounded-xl border border-red-900/40 bg-neutral-950 px-4 py-3 text-sm text-white placeholder-neutral-600 transition focus:border-red-500 focus:outline-none"
+            className="h-12 flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-5 text-sm text-white placeholder-neutral-600 transition-colors focus:border-red-600/50 focus:outline-none"
           />
           <button
             type="submit"
             disabled={searching || !searchQuery.trim()}
-            className="rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-12 flex-shrink-0 rounded-full bg-red-600 px-7 text-sm font-semibold text-white transition hover:bg-red-500 disabled:pointer-events-none disabled:opacity-40"
           >
             {searching ? "…" : "Search"}
           </button>
         </form>
         {searchResults.length > 0 && (
-          <div className="mt-3 space-y-1">
+          <div className="mt-4 space-y-1">
             {searchResults.map((t) => (
               <TrackRow
                 key={t.uri}
@@ -790,7 +795,7 @@ export default function LooperWidget({
 
       {/* Artist */}
       <Section
-        title="Load an artist"
+        label="Load an artist"
         hint="Paste an artist's Spotify page link (contains /artist/) to pull their top tracks"
       >
         <form
@@ -798,34 +803,34 @@ export default function LooperWidget({
             e.preventDefault();
             loadArtist();
           }}
-          className="flex gap-2"
+          className="flex gap-2.5"
         >
           <input
             value={artistInput}
             onChange={(e) => setArtistInput(e.target.value)}
             placeholder="https://open.spotify.com/artist/…"
-            className="flex-1 rounded-xl border border-red-900/40 bg-neutral-950 px-4 py-3 text-sm text-white placeholder-neutral-600 transition focus:border-red-500 focus:outline-none"
+            className="h-12 flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-5 text-sm text-white placeholder-neutral-600 transition-colors focus:border-red-600/50 focus:outline-none"
           />
           <button
             type="submit"
             disabled={loadingArtist || !artistInput.trim()}
-            className="rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-12 flex-shrink-0 rounded-full bg-red-600 px-7 text-sm font-semibold text-white transition hover:bg-red-500 disabled:pointer-events-none disabled:opacity-40"
           >
             {loadingArtist ? "…" : "Load"}
           </button>
         </form>
         {artist && (
-          <div className="mt-4 flex items-center gap-4 rounded-xl bg-neutral-900/50 p-3">
+          <div className="mt-5 flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
             {artist.image && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={artist.image}
                 alt=""
-                className="h-16 w-16 rounded-full object-cover ring-2 ring-red-900/60"
+                className="h-14 w-14 rounded-full object-cover ring-1 ring-white/10"
               />
             )}
             <div>
-              <p className="text-lg font-semibold text-white">{artist.name}</p>
+              <p className="text-lg font-medium text-white">{artist.name}</p>
               {artist.followers > 0 && (
                 <p className="text-xs text-neutral-500">
                   {artist.followers.toLocaleString()} followers
@@ -835,7 +840,7 @@ export default function LooperWidget({
           </div>
         )}
         {artistTracks.length > 0 && (
-          <div className="mt-3 space-y-1">
+          <div className="mt-4 space-y-1">
             {artistTracks.map((t) => (
               <TrackRow
                 key={t.uri}
@@ -849,9 +854,9 @@ export default function LooperWidget({
       </Section>
 
       {/* Setlist */}
-      <Section title="Setlist" hint="Your event's rotation — songs cycle in order">
+      <Section label="Setlist" hint="Your event's rotation — songs cycle in order">
         {setlist.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-neutral-800 p-4 text-center text-sm text-neutral-600">
+          <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-neutral-600">
             Empty — add tracks with the + button
           </p>
         ) : (
@@ -860,9 +865,9 @@ export default function LooperWidget({
               {setlist.map((t, i) => (
                 <div
                   key={`${t.uri}-${i}`}
-                  className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-neutral-900/70"
+                  className="flex items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-white/[0.04]"
                 >
-                  <span className="w-5 text-center text-xs text-neutral-600">
+                  <span className="w-5 text-center text-xs tabular-nums text-neutral-600">
                     {i + 1}
                   </span>
                   {t.albumArt ? (
@@ -870,23 +875,23 @@ export default function LooperWidget({
                     <img
                       src={t.albumArt}
                       alt=""
-                      className="h-10 w-10 flex-shrink-0 rounded-md object-cover"
+                      className="h-10 w-10 flex-shrink-0 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="h-10 w-10 flex-shrink-0 rounded-md bg-neutral-800" />
+                    <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-neutral-900" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-white">
+                    <p className="truncate text-sm font-medium text-white" title={t.name}>
                       {t.name}
                     </p>
-                    <p className="truncate text-xs text-neutral-400">
+                    <p className="mt-0.5 truncate text-xs text-neutral-500">
                       {t.artists}
                     </p>
                   </div>
                   <button
                     onClick={() => playTrack(t)}
                     title="Play now"
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-xs text-white opacity-70 transition hover:bg-red-500 hover:opacity-100"
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-xs text-white opacity-80 transition hover:bg-red-500 hover:opacity-100"
                   >
                     ▶
                   </button>
@@ -895,23 +900,23 @@ export default function LooperWidget({
                       setSetlist((prev) => prev.filter((_, idx) => idx !== i))
                     }
                     title="Remove"
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-neutral-500 opacity-70 transition hover:text-red-400 hover:opacity-100"
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:text-red-400"
                   >
                     ✕
                   </button>
                 </div>
               ))}
             </div>
-            <div className="mt-3 flex gap-2">
+            <div className="mt-5 flex gap-2.5">
               <button
                 onClick={playSetlist}
-                className="flex-1 rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700"
+                className="h-12 flex-1 rounded-full bg-red-600 text-sm font-semibold text-white transition hover:bg-red-500"
               >
                 Play setlist
               </button>
               <button
                 onClick={() => setSetlist([])}
-                className="rounded-xl border border-red-900/40 px-6 py-3 text-sm text-neutral-400 transition hover:border-red-500 hover:text-white"
+                className="h-12 rounded-full border border-white/[0.1] px-6 text-sm text-neutral-400 transition hover:border-white/30 hover:text-white"
               >
                 Clear
               </button>
@@ -920,110 +925,74 @@ export default function LooperWidget({
         )}
       </Section>
 
-      {/* Loop Engine */}
+      {/* Loop engine */}
       <Section
-        title="Loop engine"
-        hint="This song hangs whatever's playing. Setlist rotates the setlist. Toggles apply instantly."
+        label="Loop engine"
+        hint="“This song” hangs whatever's playing. “Setlist” rotates. Changes apply instantly."
       >
-        <div className="space-y-4">
+        <div className="space-y-7">
           <div>
-            <p className="mb-2 text-[10px] uppercase tracking-widest text-neutral-500">
-              Repeat
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Toggle
-                active={repeatMode === "off"}
-                onClick={() => selectRepeat("off")}
-              >
-                Off
-              </Toggle>
-              <Toggle
-                active={repeatMode === "track"}
-                onClick={() => selectRepeat("track")}
-              >
-                This song
-              </Toggle>
-              <Toggle
-                active={repeatMode === "context"}
-                onClick={() => selectRepeat("context")}
-              >
-                Setlist
-              </Toggle>
-            </div>
+            <ControlLabel>Repeat</ControlLabel>
+            <SegmentedControl
+              id="sp-repeat"
+              options={[
+                { value: "off", label: "Off" },
+                { value: "track", label: "This song" },
+                { value: "context", label: "Setlist" },
+              ]}
+              value={repeatMode}
+              onChange={(m) => selectRepeat(m)}
+            />
           </div>
 
           <div>
-            <p className="mb-2 text-[10px] uppercase tracking-widest text-neutral-500">
-              Stop after
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Toggle
-                active={stopMode === "never"}
-                onClick={() => setStopMode("never")}
-              >
-                Forever
-              </Toggle>
-              <Toggle
-                active={stopMode === "plays"}
-                onClick={() => setStopMode("plays")}
-              >
-                Plays
-              </Toggle>
+            <ControlLabel>Stop after</ControlLabel>
+            <div className="flex flex-wrap items-center gap-3">
+              <SegmentedControl
+                id="sp-stop"
+                options={[
+                  { value: "never", label: "Forever" },
+                  { value: "plays", label: "Plays" },
+                  { value: "duration", label: "Hours" },
+                ]}
+                value={stopMode}
+                onChange={setStopMode}
+              />
               {stopMode === "plays" && (
-                <input
-                  type="number"
+                <NumberField
+                  value={stopPlays}
+                  onChange={setStopPlays}
                   min={1}
                   max={999}
-                  value={stopPlays}
-                  onChange={(e) =>
-                    setStopPlays(Math.max(1, Number(e.target.value) || 1))
-                  }
-                  className="w-16 rounded-lg border border-red-900/40 bg-neutral-950 px-2 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                  suffix="plays"
                 />
               )}
-              <Toggle
-                active={stopMode === "duration"}
-                onClick={() => setStopMode("duration")}
-              >
-                Hours
-              </Toggle>
               {stopMode === "duration" && (
-                <input
-                  type="number"
+                <NumberField
+                  value={stopHours}
+                  onChange={setStopHours}
                   min={1}
                   max={24}
-                  value={stopHours}
-                  onChange={(e) =>
-                    setStopHours(Math.max(1, Number(e.target.value) || 1))
-                  }
-                  className="w-16 rounded-lg border border-red-900/40 bg-neutral-950 px-2 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                  suffix="hours"
                 />
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-3 pt-1">
-            {!loopActive ? (
-              <button
-                onClick={startLoop}
-                className="rounded-xl bg-red-600 px-8 py-3 text-sm font-semibold text-white shadow-[0_0_20px_rgba(220,38,38,0.3)] transition hover:bg-red-700"
-              >
-                Start loop
-              </button>
-            ) : (
-              <button
-                onClick={() => stopLoop("Stopped — loop ended")}
-                className="rounded-xl border-2 border-red-600 px-8 py-3 text-sm font-semibold text-red-400 transition hover:bg-red-950"
-              >
+          <div className="pt-1">
+            {loopActive ? (
+              <StopButton onClick={() => stopLoop("Stopped — loop ended")}>
                 Stop
-              </button>
+              </StopButton>
+            ) : (
+              <PrimaryButton onClick={startLoop}>Start loop</PrimaryButton>
             )}
           </div>
         </div>
       </Section>
 
       {status && (
-        <p className="pb-4 text-center text-sm text-neutral-400">{status}</p>
+        <p className="pb-6 pt-1 text-center text-sm text-neutral-500">{status}</p>
       )}
     </div>
   );
