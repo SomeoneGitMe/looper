@@ -201,6 +201,20 @@ export default function LooperWidget({
     repeatModeRef.current = repeatMode;
   }, [repeatMode]);
 
+  /* ---- Empty-field clearing: no lingering results with a blank bar ---- */
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (artistInput.trim() === "") {
+      setArtist(null);
+      setArtistTracks([]);
+    }
+  }, [artistInput]);
+
   useEffect(() => {
     if (!onPauseReady) return;
     onPauseReady(() => {

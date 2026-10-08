@@ -42,6 +42,11 @@ interface ChannelInfo {
   subscribers: number;
 }
 
+interface PlaylistInfo {
+  title: string;
+  channelTitle: string;
+}
+
 type RepeatMode = "off" | "track" | "context";
 type StopMode = "never" | "plays" | "duration";
 
@@ -182,6 +187,11 @@ export default function YouTubeWidget({
   const [channelVideos, setChannelVideos] = useState<Video[]>([]);
   const [loadingChannel, setLoadingChannel] = useState(false);
 
+  const [playlistInput, setPlaylistInput] = useState("");
+  const [playlist, setPlaylist] = useState<PlaylistInfo | null>(null);
+  const [playlistVideos, setPlaylistVideos] = useState<Video[]>([]);
+  const [loadingPlaylist, setLoadingPlaylist] = useState(false);
+
   const [setlist, setSetlist] = useState<Video[]>([]);
 
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("track");
@@ -221,6 +231,27 @@ export default function YouTubeWidget({
   useEffect(() => {
     setlistRef.current = setlist;
   }, [setlist]);
+
+  /* ---- Empty-field clearing: no lingering results with a blank bar ---- */
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (channelInput.trim() === "") {
+      setChannel(null);
+      setChannelVideos([]);
+    }
+  }, [channelInput]);
+
+  useEffect(() => {
+    if (playlistInput.trim() === "") {
+      setPlaylist(null);
+      setPlaylistVideos([]);
+    }
+  }, [playlistInput]);
 
   useEffect(() => {
     if (!onPauseReady) return;
@@ -644,9 +675,50 @@ export default function YouTubeWidget({
     }
   }
 
+  async function loadPlaylist() {
+    if (!playlistInput.trim()) return;
+    setLoadingPlaylist(true);
+    setStatus("");
+    try {
+      const res = await fetch(
+        `/api/youtube/playlist?url=${encodeURIComponent(playlistInput)}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus(
+          typeof data.error === "string"
+            ? data.error
+            : `Playlist error: ${JSON.stringify(data.error ?? data)}`
+        );
+        return;
+      }
+      setPlaylist(data.playlist);
+      setPlaylistVideos(data.videos ?? []);
+      if ((data.videos ?? []).length === 0) {
+        setStatus("Playlist loaded but no videos found — is it empty?");
+      }
+    } finally {
+      setLoadingPlaylist(false);
+    }
+  }
+
   function addToSetlist(video: Video) {
     setSetlist((prev) => [...prev, video]);
     setStatus(`Added “${video.title}” to setlist`);
+  }
+
+  function addAllPlaylistToSetlist() {
+    if (playlistVideos.length === 0) return;
+    const playable = playlistVideos.filter(
+      (v) => v.embeddable && !unavailableRef.current.has(v.videoId)
+    );
+    const skipped = playlistVideos.length - playable.length;
+    setSetlist((prev) => [...prev, ...playable]);
+    setStatus(
+      `Added ${playable.length} playlist videos to the setlist${
+        skipped > 0 ? ` — ${skipped} skipped (can't be embedded)` : ""
+      }`
+    );
   }
 
   function togglePlay() {
@@ -900,10 +972,71 @@ export default function YouTubeWidget({
         )}
       </Section>
 
+      <Section
+        label="Load a playlist"
+        hint="Paste a playlist link — then add it all to the setlist in one click"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            loadPlaylist();
+          }}
+          className="flex gap-2.5"
+        >
+          <input
+            value={playlistInput}
+            onChange={(e) => setPlaylistInput(e.target.value)}
+            placeholder="https://youtube.com/playlist?list=…"
+            className="h-12 flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-5 text-sm text-white placeholder-neutral-600 transition-colors focus:border-red-600/50 focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={loadingPlaylist || !playlistInput.trim()}
+            className="h-12 flex-shrink-0 rounded-full bg-red-600 px-7 text-sm font-semibold text-white transition hover:bg-red-500 disabled:pointer-events-none disabled:opacity-40"
+          >
+            {loadingPlaylist ? "…" : "Load"}
+          </button>
+        </form>
+        {playlist && (
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="min-w-0">
+              <p className="truncate text-lg font-medium text-white" title={playlist.title}>
+                {playlist.title}
+              </p>
+              <p className="mt-0.5 text-xs text-neutral-500">
+                {playlist.channelTitle ? `${playlist.channelTitle} · ` : ""}
+                {playlistVideos.length} videos
+              </p>
+            </div>
+            {playlistVideos.length > 0 && (
+              <button
+                onClick={addAllPlaylistToSetlist}
+                className="h-11 flex-shrink-0 rounded-full bg-red-600 px-6 text-sm font-semibold text-white transition hover:bg-red-500"
+              >
+                Add all to setlist
+              </button>
+            )}
+          </div>
+        )}
+        {playlistVideos.length > 0 && (
+          <div className="mt-4 space-y-1">
+            {playlistVideos.map((v) => (
+              <VideoRow
+                key={v.videoId}
+                video={v}
+                unavailable={unavailableIds.has(v.videoId)}
+                onPlay={() => playVideoRow(v)}
+                onAdd={() => addToSetlist(v)}
+              />
+            ))}
+          </div>
+        )}
+      </Section>
+
       <Section label="Setlist" hint="Your event's rotation — videos cycle in order">
         {setlist.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-neutral-600">
-            Empty — add videos with the + button
+            Empty — add videos with the + button or load a playlist above
           </p>
         ) : (
           <>
